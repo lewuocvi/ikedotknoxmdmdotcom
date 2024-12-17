@@ -9,21 +9,30 @@
  */
 
 export default {
-	async fetch(request, env, ctx) {
-		const url = 'https://cloudflare-dns.com/dns-query?name=ike.knoxmdm.com';
-		const response = await fetch(url, {
-			headers: {
-				Accept: 'application/dns-json',
-			},
-		});
+    async fetch(request, env, ctx) {
+        // Parse the URL to get the query parameters
+        const url = new URL(request.url);
+        const domain = url.searchParams.get('domain');
 
-		if (!response.ok) {
-			return new Response('Failed to fetch DNS data', { status: 500 });
-		}
+        if (!domain) {
+            return new Response('Domain parameter is missing', { status: 400 });
+        }
 
-		const jsonData = await response.json();
-		return new Response(JSON.stringify(jsonData['Answer']), {
-			headers: { 'Content-Type': 'application/json' },
-		});
-	},
+        console.log({ domain });
+        const dnsUrl = `https://cloudflare-dns.com/dns-query?name=${domain}`;
+        const response = await fetch(dnsUrl, {
+            headers: {
+                Accept: 'application/dns-json',
+            },
+        });
+
+        if (!response.ok) {
+            return new Response('Failed to fetch DNS data', { status: 500 });
+        }
+
+        const jsonData = await response.json();
+        return new Response(JSON.stringify(jsonData['Answer']), {
+            headers: { 'Content-Type': 'application/json' },
+        });
+    },
 };
